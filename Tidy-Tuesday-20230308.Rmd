@@ -1,0 +1,69 @@
+---
+title: "Tidy Tuesday 3/8/23"
+author: "CTB"
+date: "2023-03-08"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, dev = "ragg_png")
+library(tidytuesdayR)
+library(tidyverse)
+library(lubridate)
+```
+
+```{r}
+tuesdata <- tidytuesdayR::tt_load('2023-03-07')
+
+numbats <- tuesdata$numbats
+
+str(numbats)
+
+head(numbats)
+
+numbats %>% group_by(scientificName) %>% summarise(n = n(),
+                                                   minLat = min(decimalLatitude, na.rm=TRUE),
+                                                   maxLat = max(decimalLatitude, na.rm=TRUE),
+                                                   minLong = min(decimalLongitude, na.rm=TRUE),
+                                                   maxLong = max(decimalLongitude, na.rm=TRUE),
+                                                   earliest = min(eventDate, na.rm=TRUE),
+                                                   most_recent = max(eventDate, na.rm=TRUE))
+
+numbats <- numbats %>% mutate(scientificName = as.factor(scientificName))
+
+numbats_loc <- numbats %>% filter(is.na(decimalLatitude) == FALSE & is.na(decimalLongitude) == FALSE)
+```
+
+```{r}
+library(ozmaps)
+library(sf)
+sf_oz <- ozmap_data("states")
+
+num_sites <- st_as_sf(numbats_loc, coords = c("decimalLongitude", "decimalLatitude"), crs=4326) %>%
+  st_transform(2248) 
+
+aus_map <- ggplot(sf_oz) + geom_sf() +
+  coord_sf(crs = "+proj=lcc +lon_0=135 +lat_0=-30 +lat_1=-10 +lat_2=-45 +datum=WGS84")
+
+num_map <- aus_map +
+  geom_sf(data=num_sites, size=2.5, shape=21, aes(fill=scientificName)) +
+  guides(fill = guide_legend(title = "Scientific Name"))
+num_map
+ggsave("numbat_map.png", plot=num_map,width=7, height=6)
+getwd()
+
+
+
+numbats_dryandra <- numbats_loc %>% filter(dryandra == TRUE)
+
+dry_sites <- st_as_sf(numbats_dryandra, coords = c("decimalLongitude", "decimalLatitude"), crs=4326) %>%
+  st_transform(2248) 
+
+dry_map <- ggplot(sf_oz) + geom_sf() +
+  coord_sf(xlim=c(110,130), ylim=)
+
+dry_map +
+  geom_sf(data=dry_sites, size=2.5, shape=21)
+
+```
+

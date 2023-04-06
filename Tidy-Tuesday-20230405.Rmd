@@ -1,0 +1,73 @@
+---
+title: "Tidy Tuesday 4/5/23"
+author: "CTB"
+date: "2023-04-05"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidytuesdayR)
+library(tidyverse)
+library(lubridate)
+library(viridis)
+library(ggthemes)
+```
+
+```{r}
+tuesdata <- tidytuesdayR::tt_load('2019-02-19')
+phds <- tuesdata$phd_by_field
+phds <- phds %>% mutate(broad_field = as.factor(broad_field),
+                        major_field = as.factor(major_field))
+phds
+```
+
+```{r}
+phds_groups <- phds %>% group_by(broad_field, year) %>%
+  summarise(tot_phds = sum(n_phds, na.rm=TRUE)) %>% 
+  ungroup()
+phds_groups
+
+broad_field_plot <- ggplot(data=phds_groups, aes(x=year, y=tot_phds, fill=broad_field)) +
+  geom_bar(position="stack", stat="identity") +
+  scale_x_continuous(breaks=seq(2008, 2017, 1)) +
+  ggtitle("Number of PhDs awarded by field, 2008-2017") +
+  ylab("Total Number of PhDs awarded") +
+  xlab("Year") +
+  scale_y_continuous(breaks=seq(0, 60000, 10000)) +
+  scale_fill_viridis(discrete=TRUE, name="Broad Field") +
+  theme_few()
+broad_field_plot
+
+ggsave("C:/Users/ctber/Documents/R/TidyTuesdays_qCMB/broad_field_plot.png",
+       plot=broad_field_plot, width=9, height=5)
+```
+
+```{r}
+lifesci <- phds %>% filter(broad_field == "Life sciences")
+
+
+lifesci_groups <- lifesci %>% group_by(major_field, year) %>%
+  summarise(tot_phds = sum(n_phds, na.rm=TRUE)) %>% 
+  ungroup()
+min(lifesci_groups$year)
+max(lifesci_groups$year)
+
+
+lifesci_groups
+
+lifesci_plot <- ggplot(data=lifesci_groups, aes(x=year, y=tot_phds, fill=major_field)) +
+  geom_bar(position="stack", stat="identity") +
+  scale_x_continuous(breaks=seq(2008, 2017, 1)) +
+  ggtitle("Number of Life Science PhDs by field, 2008-2017") +
+  ylab("Total Number of PhDs awarded") +
+  xlab("Year") +
+  scale_y_continuous(breaks=seq(0, 25000, 5000)) +
+  scale_fill_viridis(discrete=TRUE, name="Major Field") +
+  theme_few()
+lifesci_plot
+
+ggsave("C:/Users/ctber/Documents/R/TidyTuesdays_qCMB/lifesci_plot.png",
+       plot=lifesci_plot, width=9, height=5)
+```
+
